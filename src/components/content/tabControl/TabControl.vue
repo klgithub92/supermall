@@ -25,6 +25,8 @@
     methods: {
       tabClick(index) {
         this.currentIndex = index
+        //传递事件
+        this.$emit('tabToggleClick', index)
       }
     }
   }
@@ -38,6 +40,7 @@
   text-align: center;
   font-size: 15px;
   background-color: #fff;
+  z-index: 9;
 }
 .tab-control-item {
   flex: 1;

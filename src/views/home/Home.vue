@@ -1,63 +1,17 @@
 <template>
   <div id="home">
     <nav-bar class="home-nav"><div slot="center">购物车</div></nav-bar>
-    <home-swiper :banners="banners"></home-swiper>
-    <home-recommend-view :recommends="recommends" />
-    <feature-view />
-    <tab-control :titles="['流行', '新款', '经典']" class="tab-control" />
+    <scroll class="content" ref="scroll" :probe-type="3" @scroll="contentScroll" :pull-up-load="true" @pullingUp="loadMore">
+      <home-swiper :banners="banners"></home-swiper>
+      <home-recommend-view :recommends="recommends" />
+      <feature-view />
+      <tab-control :titles="['流行', '新款', '经典']" class="tab-control" @tabToggleClick="tabToggleClick" />
+      <goods-list :goods-list="showGoods" />
+    </scroll>
 
-    <ul>
-      <li>列表1</li>
-      <li>列表2</li>
-      <li>列表3</li>
-      <li>列表4</li>
-      <li>列表5</li>
-      <li>列表6</li>
-      <li>列表7</li>
-      <li>列表8</li>
-      <li>列表9</li>
-      <li>列表10</li>
-      <li>列表11</li>
-      <li>列表12</li>
-      <li>列表13</li>
-      <li>列表14</li>
-      <li>列表15</li>
-      <li>列表16</li>
-      <li>列表17</li>
-      <li>列表18</li>
-      <li>列表19</li>
-      <li>列表20</li>
-      <li>列表21</li>
-      <li>列表22</li>
-      <li>列表23</li>
-      <li>列表24</li>
-      <li>列表25</li>
-      <li>列表26</li>
-      <li>列表27</li>
-      <li>列表28</li>
-      <li>列表29</li>
-      <li>列表30</li>
-      <li>列表31</li>
-      <li>列表32</li>
-      <li>列表33</li>
-      <li>列表34</li>
-      <li>列表35</li>
-      <li>列表36</li>
-      <li>列表37</li>
-      <li>列表38</li>
-      <li>列表39</li>
-      <li>列表40</li>
-      <li>列表41</li>
-      <li>列表42</li>
-      <li>列表43</li>
-      <li>列表44</li>
-      <li>列表45</li>
-      <li>列表46</li>
-      <li>列表47</li>
-      <li>列表48</li>
-      <li>列表49</li>
-      <li>列表50</li>
-    </ul>
+    <!-- 返回顶部按钮组件 -->
+    <!-- 给组件添加原生的点击事件 监听组件根元素的原生事件-->
+    <back-top @click.native="backTop" v-show="isShow" />
   </div>
 </template>
 
@@ -70,9 +24,12 @@
   //这里是公共组件部分
   import NavBar from 'components/common/navbar/NavBar.vue'
   import TabControl from 'components/content/tabControl/TabControl'
+  import GoodsList from 'components/content/goods/GoodsList.vue'
+  import Scroll from 'components/common/scroll/Scroll.vue'
+  import BackTop from 'components/content/backTop/BackTop.vue'
 
   //这里是方法部分
-  import { getHomeMultidata } from 'network/home'
+  import { getHomeMultidata, getHomeGoods } from 'network/home'
 
   export default {
     components: {
@@ -80,18 +37,86 @@
       HomeRecommendView,
       FeatureView,
       NavBar,
-      TabControl
+      TabControl,
+      GoodsList,
+      Scroll,
+      BackTop
     },
     data() {
       return {
         banners: [],
-        recommends: []
+        recommends: [],
+        // tab栏商品的所有数据
+        goods: {
+          pop: { page: 0, list: [] },
+          new: { page: 0, list: [] },
+          sell: { page: 0, list: [] }
+        },
+        currentType: 'pop',
+        isShow: false
       }
     },
     created() {
-      //获取首页请求数据
-      getHomeMultidata()
-        .then(res => {
+      //1.获取首页请求数据
+      this.getHomeMultidata()
+
+      //2.获得首页tab栏的所有商品信息
+      this.getHomeGoodsData('pop')
+      this.getHomeGoodsData('new')
+      this.getHomeGoodsData('sell')
+    },
+    computed: {
+      //展示商品
+      showGoods() {
+        return this.goods[this.currentType].list
+      }
+    },
+    methods: {
+      /**
+       *事件监听相关方法
+       */
+      tabToggleClick(index) {
+        // console.log(index)
+        switch (index) {
+          case 0:
+            this.currentType = 'pop'
+            break
+          case 1:
+            this.currentType = 'new'
+            break
+          case 2:
+            this.currentType = 'sell'
+            break
+        }
+      },
+      //返回顶部事件
+      backTop() {
+        // this.$refs.scroll 拿到的是scroll组件对象
+        //this.$refs.scroll.scroll 拿到的是Scroll组件下data的scroll值
+        // this.$refs.scroll.scroll.scrollTo(0, 0, 300) //x y 300毫秒
+        this.$refs.scroll.scrollTo(0, 0) //默认300ms
+      },
+      //滚动事件 返回顶部按钮的显示与隐藏
+      contentScroll(position) {
+        // console.log(position.y)
+        // this.isShow = -position.y > 1000
+        this.isShow = Math.abs(position.y) > 1000
+      },
+      //上拉加载更多
+      loadMore() {
+        // console.log('上拉加载更多')
+        //完成加载更多
+        this.getHomeGoodsData(this.currentType)
+
+        //有的图片还没加载完 图片加载时异步的 所有现在要在重新刷一些重新给高度
+        this.$refs.scroll.scroll.refresh() //刷新
+      },
+      /**
+       * 网络请求相关方法
+       */
+      //1.获取首页请求数据 封装
+      getHomeMultidata() {
+        getHomeMultidata().then(res => {
           //先把数据保存到data中，因为这里函数调用执行完里面的数据就会被垃圾回收机制回收
           //保存数据实质时保存对象的引用(地址或指针),当这里的数据被回收时，他就不会指向内存中的数据了，但是因为把引用保存在了data中所有又有指针指向了内存数据
           //注意：如果对象没有引用指向它时就会把回收，所有闭包就可以让数据存活了
@@ -100,16 +125,31 @@
           this.banners = res.data.banner.list
           this.recommends = res.data.recommend.list
         })
-        .catch(err => {
-          console.log(err)
+      },
+      //2.获得首页tab栏的所有商品信息
+      getHomeGoodsData(type) {
+        const page = this.goods[type].page + 1
+        getHomeGoods(type, page).then(res => {
+          // console.log(res)
+          //把数据加入到data中goods里的对应list数组中
+          this.goods[type].list.push(...res.data.list)
+          //页码要再加1
+          this.goods[type].page += 1
+
+          //完成加载更多
+          this.$refs.scroll.finishPullUp()
         })
+      }
     }
   }
 </script>
 
-<style>
+<style scoped>
 #home {
+  position: relative;
   padding-top: 44px;
+  /* 视口百分比高度 */
+  height: 100vh;
 }
 .home-nav {
   /* 粘性布局 */
@@ -130,5 +170,20 @@
   position: sticky;
   /* 它本身距离视口窗顶部的距离 */
   top: 44px;
+}
+/* 注意calc函数里减号两边要有空格  */
+/* 这样可能有误差 */
+/* .content {
+  height: calc(100% - 93px);
+  overflow: hidden;
+  margin-top: 44px;
+} */
+/* 采用定位就没有误差了 */
+.content {
+  position: absolute;
+  top: 44px;
+  bottom: 49px;
+  left: 0;
+  right: 0;
 }
 </style>
