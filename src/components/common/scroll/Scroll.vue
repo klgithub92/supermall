@@ -30,11 +30,18 @@
     methods: {
       //进一步封装返回顶部方法
       scrollTo(x, y, time = 300) {
-        this.scroll.scrollTo(x, y, time)
+        //这样做更严谨 防止网速太快那边的组件还没渲染完
+        this.scroll && this.scroll.scrollTo(x, y, time)
       },
       //完成加载更多
       finishPullUp() {
-        this.scroll.finishPullUp()
+        this.scroll && this.scroll.finishPullUp()
+      },
+      //刷新图片
+      refresh() {
+        // console.log('1111')
+        //这样做更严谨 防止网速太快那边的组件还没渲染完
+        this.scroll && this.scroll.refresh()
       }
     },
     mounted() {
@@ -42,19 +49,24 @@
       this.scroll = new BScroll(this.$refs.swrapper, {
         click: true,
         probeType: this.probeType,
-        oserveDOM: true, //监听dom变化
+        // oserveDOM: true, //监听dom变化
+        // observeImage: true, //根据图片高度动态刷新高度
         pullUpLoad: this.pullUpLoad //上拉加载更多
       })
       //2.实时监听滚动位置
-      this.scroll.on('scroll', position => {
-        //把position的值传递给home父组件 到哪里处理
-        this.$emit('scroll', position)
-      })
+      if (this.probeType === 2 || this.probeType === 3) {
+        this.scroll.on('scroll', position => {
+          //把position的值传递给home父组件 到哪里处理
+          this.$emit('scroll', position)
+        })
+      }
       //3.上拉加载更多
-      this.scroll.on('pullingUp', () => {
-        // console.log('加载更多')
-        this.$emit('pullingUp')
-      })
+      if (this.pullUpLoad) {
+        this.scroll.on('pullingUp', () => {
+          // console.log('加载更多')
+          this.$emit('pullingUp')
+        })
+      }
     }
   }
 </script>

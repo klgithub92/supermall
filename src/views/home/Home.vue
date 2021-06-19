@@ -1,11 +1,13 @@
 <template>
   <div id="home">
     <nav-bar class="home-nav"><div slot="center">购物车</div></nav-bar>
-    <scroll class="content" ref="scroll" :probe-type="3" @scroll="contentScroll" :pull-up-load="true" @pullingUp="loadMore">
-      <home-swiper :banners="banners"></home-swiper>
+    <tab-control :titles="['流行', '新款', '经典']" class="tab-control" @tabToggleClick="tabToggleClick" ref="tabControl1" v-show="isTabFixed" />
+
+    <scroll id="scroll" class="content" ref="scroll" :probe-type="3" @scroll="contentScroll" :pull-up-load="true" @pullingUp="loadMore">
+      <home-swiper :banners="banners" @swiperImgLoad="swiperImgLoad" />
       <home-recommend-view :recommends="recommends" />
       <feature-view />
-      <tab-control :titles="['流行', '新款', '经典']" class="tab-control" @tabToggleClick="tabToggleClick" />
+      <tab-control :titles="['流行', '新款', '经典']" @tabToggleClick="tabToggleClick" ref="tabControl2" />
       <goods-list :goods-list="showGoods" />
     </scroll>
 
@@ -30,6 +32,7 @@
 
   //这里是方法部分
   import { getHomeMultidata, getHomeGoods } from 'network/home'
+  import { debounce } from 'common/utils'
 
   export default {
     components: {
@@ -53,7 +56,15 @@
           sell: { page: 0, list: [] }
         },
         currentType: 'pop',
-        isShow: false
+        isShow: false, //返回顶部默认值
+        tabOffsetTop: 0, //吸顶默认值
+        isTabFixed: false //是否吸顶默认值
+      }
+    },
+    computed: {
+      //展示商品
+      showGoods() {
+        return this.goods[this.currentType].list
       }
     },
     created() {
@@ -64,17 +75,33 @@
       this.getHomeGoodsData('pop')
       this.getHomeGoodsData('new')
       this.getHomeGoodsData('sell')
+
+      // created生命周期钩子里可能拿不到元素
+      // document.querySelector
+      // this.$refs.scroll
     },
-    computed: {
-      //展示商品
-      showGoods() {
-        return this.goods[this.currentType].list
-      }
+    mounted() {
+      // 1.图片加载完的事件监听
+      //定义图片防抖函数 可以不传毫秒事件参数
+      const refresh = debounce(this.$refs.scroll.refresh, 50)
+      //监听事件总线
+      //监听item的玉佩加载完成
+      this.$bus.$on('itemImageLoad', () => {
+        // 所有在这里刷新 这样刷新就不会时每次30次了 而是1到几次 减轻了对服务器的压力
+        refresh()
+      })
+
+      //注意这里这样拿到的是不包含大的图片的高度如轮播图 大的图片还没有加载完成
+      // 2.获取tabControl的offsetTop  吸顶值赋值
+      //注意：所有的组件都有一个属性$el:用于获取元素中的组件
+      // this.tabOffsetTop = this.$refs.tabControl.$el.offsetTop
+      // console.log(this.tabOffsetTop) //53
     },
     methods: {
       /**
        *事件监听相关方法
        */
+      //tab栏切换
       tabToggleClick(index) {
         // console.log(index)
         switch (index) {
@@ -88,6 +115,9 @@
             this.currentType = 'sell'
             break
         }
+        //吸顶功能上的选项要与点击的保持一致
+        this.$refs.tabControl1.currentIndex = index
+        this.$refs.tabControl2.currentIndex = index
       },
       //返回顶部事件
       backTop() {
@@ -99,17 +129,26 @@
       //滚动事件 返回顶部按钮的显示与隐藏
       contentScroll(position) {
         // console.log(position.y)
+        //1.监听返回按钮显示与隐藏
         // this.isShow = -position.y > 1000
         this.isShow = Math.abs(position.y) > 1000
+
+        //2.监听tabControl吸顶效果
+        this.isTabFixed = Math.abs(position.y) > this.tabOffsetTop
       },
-      //上拉加载更多
+      // 上拉加载更多
       loadMore() {
         // console.log('上拉加载更多')
         //完成加载更多
         this.getHomeGoodsData(this.currentType)
 
         //有的图片还没加载完 图片加载时异步的 所有现在要在重新刷一些重新给高度
-        this.$refs.scroll.scroll.refresh() //刷新
+        // this.$refs.scroll.scroll.refresh() //刷新
+      },
+      //监听轮播图片加载完成 完成吸顶操作
+      swiperImgLoad() {
+        this.tabOffsetTop = this.$refs.tabControl2.$el.offsetTop
+        // console.log(this.tabOffsetTop) //608 拿到正确的值了
       },
       /**
        * 网络请求相关方法
@@ -147,17 +186,18 @@
 <style scoped>
 #home {
   position: relative;
-  padding-top: 44px;
+  /* padding-top: 44px; */
   /* 视口百分比高度 */
   height: 100vh;
 }
 .home-nav {
+  /* 这里没必要托镖了，因为better-scroll是局部滚动，不包含这里 只有站住位置就行*/
   /* 粘性布局 */
   /* position: sticky; */
-  position: fixed;
-  left: 0;
+  position: relative;
+  /* left: 0;
   right: 0;
-  top: 0;
+  top: 0; */
   z-index: 9;
 
   background-color: var(--color-tint);
@@ -165,11 +205,18 @@
   font-weight: bold;
 }
 /* 滚动到一定位置tab栏会附着到tabbar下面 */
-.tab-control {
-  /* 粘性布局 一定要跟top */
+/* 粘性布局 一定要跟top */
+/* 它本身距离视口窗顶部的距离 */
+/* 他说原生的方法在 better-scroll里不起作用 */
+/* .tab-control {
   position: sticky;
-  /* 它本身距离视口窗顶部的距离 */
   top: 44px;
+} */
+
+.tab-control {
+  /* 不脱离文档流 并且站住了位置 */
+  position: relative;
+  z-index: 9;
 }
 /* 注意calc函数里减号两边要有空格  */
 /* 这样可能有误差 */
@@ -179,11 +226,23 @@
   margin-top: 44px;
 } */
 /* 采用定位就没有误差了 */
-.content {
+#scroll {
   position: absolute;
   top: 44px;
   bottom: 49px;
+  /* height: calc(100% - 93px); */
   left: 0;
   right: 0;
 }
+/* 吸顶样式
+*注意：这样会使本身在better-scroll范围内的tabControl变成脱离了文当流
+*有因为better-scroll的滚动核心是transform：translateY移动的所以tabControl和跟着滚动移动
+*并且tabControl以脱离文档流了 下面的会突然顶上来
+*/
+/* .isfixed {
+  position: fixed;
+  top: 44px;
+  left: 0;
+  right: 0;
+} */
 </style>
