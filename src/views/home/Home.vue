@@ -191,14 +191,14 @@
   height: 100vh;
 }
 .home-nav {
-  /* 这里没必要托镖了，因为better-scroll是局部滚动，不包含这里 只有站住位置就行*/
+  /* 这里没必要托镖了，因为better-scroll是局部滚动，不包含这里*/
   /* 粘性布局 */
   /* position: sticky; */
-  position: relative;
-  /* left: 0;
+  /* position: relative;
+  left: 0;
   right: 0;
-  top: 0; */
-  z-index: 9;
+  top: 0;
+  z-index: 9; */
 
   background-color: var(--color-tint);
   color: #fff;
@@ -227,6 +227,9 @@
 } */
 /* 采用定位就没有误差了 */
 #scroll {
+  /* 一定要加这个 保证better-scroll控制的范围不包含nav和tab上下 */
+  overflow: hidden;
+
   position: absolute;
   top: 44px;
   bottom: 49px;
