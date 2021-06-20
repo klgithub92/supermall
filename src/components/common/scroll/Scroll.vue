@@ -42,6 +42,9 @@
         // console.log('1111')
         //这样做更严谨 防止网速太快那边的组件还没渲染完
         this.scroll && this.scroll.refresh()
+      },
+      getScrollY() {
+        return this.scroll ? this.scroll.y : 0
       }
     },
     mounted() {

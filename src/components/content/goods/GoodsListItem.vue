@@ -1,5 +1,5 @@
 <template>
-  <div class="goods-item">
+  <div class="goods-item" @click="itemClick">
     <!-- vue中监听图片加载@load 原生js img.onload=function()-->
     <img :src="listItem.show.img" alt="" @load="imageLoad" />
     <div class="goods-info">
@@ -26,6 +26,9 @@
         // console.log(this.$bus)
         //发射到事件总线中 留给home.vue首页监听
         this.$bus.$emit('itemImageLoad')
+      },
+      itemClick() {
+        this.$router.push('/detail/' + this.listItem.iid)
       }
     }
   }

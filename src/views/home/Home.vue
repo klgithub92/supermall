@@ -3,7 +3,7 @@
     <nav-bar class="home-nav"><div slot="center">购物车</div></nav-bar>
     <tab-control :titles="['流行', '新款', '经典']" class="tab-control" @tabToggleClick="tabToggleClick" ref="tabControl1" v-show="isTabFixed" />
 
-    <scroll id="scroll" class="content" ref="scroll" :probe-type="3" @scroll="contentScroll" :pull-up-load="true" @pullingUp="loadMore">
+    <scroll class="content" ref="scroll" :probe-type="3" @scroll="contentScroll" :pull-up-load="true" @pullingUp="loadMore">
       <home-swiper :banners="banners" @swiperImgLoad="swiperImgLoad" />
       <home-recommend-view :recommends="recommends" />
       <feature-view />
@@ -58,7 +58,8 @@
         currentType: 'pop',
         isShow: false, //返回顶部默认值
         tabOffsetTop: 0, //吸顶默认值
-        isTabFixed: false //是否吸顶默认值
+        isTabFixed: false, //是否吸顶默认值
+        saveY: 0 //切换回来时保存的默认y轴距离
       }
     },
     computed: {
@@ -66,6 +67,21 @@
       showGoods() {
         return this.goods[this.currentType].list
       }
+    },
+    destroyed() {
+      console.log('home destroyed')
+    },
+    //这里的两个钩子函数旨在keep-alive里起作用
+    //进入调用
+    activated() {
+      this.$refs.scroll.scrollTo(0, this.saveY, 0) //第三个参数是时间
+      this.$refs.scroll.refresh() //防止突然回到顶部
+    },
+    //离开调用
+    deactivated() {
+      //保存离开时位置
+      this.saveY = this.$refs.scroll.getScrollY()
+      // console.log(this.saveY)
     },
     created() {
       //1.获取首页请求数据
@@ -226,7 +242,7 @@
   margin-top: 44px;
 } */
 /* 采用定位就没有误差了 */
-#scroll {
+.content {
   /* 一定要加这个 保证better-scroll控制的范围不包含nav和tab上下 */
   overflow: hidden;
 
