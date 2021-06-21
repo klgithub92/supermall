@@ -1,7 +1,7 @@
 <template>
   <div class="goods-item" @click="itemClick">
     <!-- vue中监听图片加载@load 原生js img.onload=function()-->
-    <img :src="listItem.show.img" alt="" @load="imageLoad" />
+    <img :src="showIma" alt="" @load="imageLoad" />
     <div class="goods-info">
       <p>{{ listItem.title }}</p>
       <span class="price">{{ listItem.price }}</span>
@@ -20,6 +20,11 @@
         }
       }
     },
+    computed: {
+      showIma() {
+        return this.listItem.image || this.listItem.show.img
+      }
+    },
     methods: {
       //监听图片加载完毕 刷新
       imageLoad() {
@@ -28,7 +33,14 @@
         this.$bus.$emit('itemImageLoad')
       },
       itemClick() {
+        // console.log(this.listItem.iid)
         this.$router.push('/detail/' + this.listItem.iid)
+        // this.$router.push({
+        //   path: '/detail',
+        //   query: {
+        //     iid: this.listItem.iid
+        //   }
+        // })
       }
     }
   }
@@ -38,7 +50,7 @@
 .goods-item {
   padding-bottom: 40px;
   position: relative;
-
+  background-color: #fff;
   width: 48%;
 }
 

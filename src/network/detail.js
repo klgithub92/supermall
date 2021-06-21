@@ -9,6 +9,13 @@ export function getDetail(iid) {
     }
   })
 }
+//商品推荐数据请求
+export function getRecommend() {
+  return request({
+    url: '/recommend'
+  })
+}
+
 //把详情需要的数据整合到一个对象中
 export class Goods {
   //数据在三个不同的地方 所有把他们放到一个对象方便使用

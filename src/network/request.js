@@ -75,16 +75,29 @@ export function request(config) {
     return config
   }, err => {
     //一般不会经过这里 比如请求之前断网了
-    console.log(err)
+    // console.log('来到了request拦截failure中');
+    return err
   })
 
   //2.2响应拦截器
   instance.interceptors.response.use(response => {
-    // console.log(response)
+    // console.log('来到了response拦截success中');
     return response.data
   }, err => {
     //比如请求的地址不存在 访问失败就不会有响应 这里就起作用了
-    console.log(err)
+    // console.log('来到了response拦截failure中');
+    // console.log(err);
+    if (err && err.response) {
+      switch (err.response.status) {
+        case 400:
+          err.message = '请求错误'
+          break
+        case 401:
+          err.message = '未授权的访问'
+          break
+      }
+    }
+    return err
   })
 
   //3.发送真正的网络请求 instance就是一个promise对象
