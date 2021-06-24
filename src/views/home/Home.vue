@@ -28,12 +28,10 @@
   import TabControl from 'components/content/tabControl/TabControl'
   import GoodsList from 'components/content/goods/GoodsList.vue'
   import Scroll from 'components/common/scroll/Scroll.vue'
-  import BackTop from 'components/content/backTop/BackTop.vue'
 
   //这里是方法部分
   import { getHomeMultidata, getHomeGoods } from 'network/home'
-  import { debounce } from 'common/utils'
-
+  import { itemImgListenerMixin, backTopMixin } from 'common/mixin'
   export default {
     components: {
       HomeSwiper,
@@ -42,8 +40,7 @@
       NavBar,
       TabControl,
       GoodsList,
-      Scroll,
-      BackTop
+      Scroll
     },
     data() {
       return {
@@ -56,33 +53,20 @@
           sell: { page: 0, list: [] }
         },
         currentType: 'pop',
-        isShow: false, //返回顶部默认值
         tabOffsetTop: 0, //吸顶默认值
         isTabFixed: false, //是否吸顶默认值
         saveY: 0 //切换回来时保存的默认y轴距离
       }
     },
+    // 混入
+    mixins: [itemImgListenerMixin, backTopMixin],
     computed: {
       //展示商品
       showGoods() {
         return this.goods[this.currentType].list
       }
     },
-    destroyed() {
-      console.log('home destroyed')
-    },
-    //这里的两个钩子函数旨在keep-alive里起作用
-    //进入调用
-    activated() {
-      this.$refs.scroll.scrollTo(0, this.saveY, 0) //第三个参数是时间
-      this.$refs.scroll.refresh() //防止突然回到顶部
-    },
-    //离开调用
-    deactivated() {
-      //保存离开时位置
-      this.saveY = this.$refs.scroll.getScrollY()
-      // console.log(this.saveY)
-    },
+
     created() {
       //1.获取首页请求数据
       this.getHomeMultidata()
@@ -97,21 +81,31 @@
       // this.$refs.scroll
     },
     mounted() {
-      // 1.图片加载完的事件监听
-      //定义图片防抖函数 可以不传毫秒事件参数
-      const refresh = debounce(this.$refs.scroll.refresh, 50)
-      //监听事件总线
-      //监听item的玉佩加载完成
-      this.$bus.$on('itemImageLoad', () => {
-        // 所有在这里刷新 这样刷新就不会时每次30次了 而是1到几次 减轻了对服务器的压力
-        refresh()
-      })
+      console.log('首页混入内容')
 
       //注意这里这样拿到的是不包含大的图片的高度如轮播图 大的图片还没有加载完成
       // 2.获取tabControl的offsetTop  吸顶值赋值
       //注意：所有的组件都有一个属性$el:用于获取元素中的组件
       // this.tabOffsetTop = this.$refs.tabControl.$el.offsetTop
       // console.log(this.tabOffsetTop) //53
+    },
+    destroyed() {
+      console.log('home destroyed')
+    },
+    //这里的两个钩子函数旨在keep-alive里起作用
+    //进入调用
+    activated() {
+      this.$refs.scroll.scrollTo(0, this.saveY, 0) //第三个参数是时间
+      // this.$refs.scroll.refresh() //防止突然回到顶部
+    },
+    //离开调用
+    deactivated() {
+      //1.保存离开时位置
+      this.saveY = this.$refs.scroll.getScrollY()
+      // console.log(this.saveY)
+
+      //2.取消全局的事件监听(取消事件总线监听事件)
+      this.$bus.$off('itemImageLoad', this.itemImgListener)
     },
     methods: {
       /**
@@ -135,19 +129,13 @@
         this.$refs.tabControl1.currentIndex = index
         this.$refs.tabControl2.currentIndex = index
       },
-      //返回顶部事件
-      backTop() {
-        // this.$refs.scroll 拿到的是scroll组件对象
-        //this.$refs.scroll.scroll 拿到的是Scroll组件下data的scroll值
-        // this.$refs.scroll.scroll.scrollTo(0, 0, 300) //x y 300毫秒
-        this.$refs.scroll.scrollTo(0, 0) //默认300ms
-      },
+
       //滚动事件 返回顶部按钮的显示与隐藏
       contentScroll(position) {
         // console.log(position.y)
         //1.监听返回按钮显示与隐藏
         // this.isShow = -position.y > 1000
-        this.isShow = Math.abs(position.y) > 1000
+        this.listenShowBackTop(position)
 
         //2.监听tabControl吸顶效果
         this.isTabFixed = Math.abs(position.y) > this.tabOffsetTop

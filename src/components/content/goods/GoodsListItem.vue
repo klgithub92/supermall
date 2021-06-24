@@ -31,6 +31,13 @@
         // console.log(this.$bus)
         //发射到事件总线中 留给home.vue首页监听
         this.$bus.$emit('itemImageLoad')
+
+        //因为详情页下面的热门推荐也会发送图片加载 所有要判断
+        // if (this.$route.path.indexOf('/home')) {
+        //   this.$bus.$emit('itemImageLoad')
+        // } else if (this.$route.path.indexOf('/detail')) {
+        //   this.$bus.$emit('detailImgLoad')
+        // }
       },
       itemClick() {
         // console.log(this.listItem.iid)

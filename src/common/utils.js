@@ -1,7 +1,7 @@
 // 公共的方法
 
 //防抖函数封装 防止速度快而不停的向服务器发送请求
-export function debounce(func, delay) {
+export function debounce(func, delay = 50) {
   let timer = null
   return function (...arg) {
     if (timer) clearTimeout(timer)

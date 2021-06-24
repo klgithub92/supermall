@@ -33,17 +33,22 @@
     },
     methods: {
       imgLoad() {
+        // 方法一：不用加防抖 之间判断所有图片加载完即可
         // 判断, 所有的图片都加载完了, 那么进行一次回调就可以了.
-        if (++this.counter === this.imagesLength) {
-          this.$emit('imageLoad')
-        }
+        // if (++this.counter === this.imagesLength) {
+        //   this.$emit('imageLoad')
+        // }
+
+        //使用防抖
+        this.$emit('imageLoad')
       }
     },
     watch: {
-      detailInfo() {
-        // 获取图片的个数
-        this.imagesLength = this.detailInfo.detailImage[0].list.length
-      }
+      //方法一:不用加防抖
+      // detailInfo() {
+      //   // 获取图片的个数
+      //   this.imagesLength = this.detailInfo.detailImage[0].list.length
+      // }
     }
   }
 </script>

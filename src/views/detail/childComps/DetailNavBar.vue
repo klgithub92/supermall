@@ -28,6 +28,8 @@
     methods: {
       titleClick(index) {
         this.currentIndex = index
+        //发出联动事件和参数
+        this.$emit('titleClick', index)
       },
       backClick() {
         // this.$router.go(-1)
