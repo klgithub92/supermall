@@ -50,7 +50,7 @@ export const backTopMixin = {
       this.$refs.scroll.scrollTo(0, 0) //默认300ms
     },
     listenShowBackTop(position) {
-      this.isShow = Math.abs(position.y) > BACKTOP_DISTANCE
+      this.isShow = Math.abs(position.y) > BACKTOP_DISTANCE//返回顶部默认
     }
   },
 }

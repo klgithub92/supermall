@@ -81,8 +81,7 @@
       // this.$refs.scroll
     },
     mounted() {
-      console.log('首页混入内容')
-
+      // console.log('首页混入内容')
       //注意这里这样拿到的是不包含大的图片的高度如轮播图 大的图片还没有加载完成
       // 2.获取tabControl的offsetTop  吸顶值赋值
       //注意：所有的组件都有一个属性$el:用于获取元素中的组件
@@ -96,7 +95,7 @@
     //进入调用
     activated() {
       this.$refs.scroll.scrollTo(0, this.saveY, 0) //第三个参数是时间
-      // this.$refs.scroll.refresh() //防止突然回到顶部
+      this.$refs.scroll.refresh() //防止突然回到顶部
     },
     //离开调用
     deactivated() {

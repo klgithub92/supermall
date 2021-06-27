@@ -19,6 +19,6 @@
 
   font-size: 14px;
   background: #f6f6f6;
-  box-shadow: 0 -2px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 -1px 1px rgba(0, 0, 0, 0.1);
 }
 </style>

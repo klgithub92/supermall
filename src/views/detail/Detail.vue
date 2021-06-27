@@ -11,7 +11,7 @@
       <div class="hot">热门推荐</div>
       <goods-list ref="recommend" :goods-list="recommendList" />
     </scroll>
-    <detail-bottom-bar />
+    <detail-bottom-bar @addToCart="addToCart" />
 
     <!-- 返回顶部按钮组件 -->
     <!-- 给组件添加原生的点击事件 监听组件根元素的原生事件-->
@@ -93,6 +93,7 @@
         //2.是否显示回到顶部
         this.listenShowBackTop(position)
       },
+
       //滚动联动效果
       _listenScrollTheme(position) {
         //1.获取y值
@@ -129,11 +130,27 @@
             break
           }
         }
+      },
+
+      //添加购物车
+      addToCart() {
+        //1.获取购物车需要展示的信息
+        const product = {}
+        product.image = this.swiperImages[0]
+        product.title = this.goodsInfo.title
+        product.desc = this.goodsInfo.desc
+        product.price = this.goodsInfo.realPrice
+        product.iid = this.iid
+
+        //2.将商品添加到购物车
+        // this.$store.state.cartList.push(product)//这样不推荐，要经过vuex的mutations
+        // this.$store.commit('addCart', product)//这是传递数据到mutations
+        this.$store.dispatch('addCart', product) //传递数据到actions
       }
     },
     mixins: [itemImgListenerMixin, backTopMixin],
     mounted() {
-      console.log('详情页混入内容')
+      // console.log('详情页混入内容')
     },
     //这个只有在keep-alive里起作用 所以这里不起作用 没有缓存
     // deactivated() {
