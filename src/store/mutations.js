@@ -9,7 +9,7 @@ export default {
   },
   //2.加入购物车
   [ADD_TO_CART](state, payload) {
-    payload.checked = false
+    payload.checked = true
     state.cartList.push(payload)
   }
 }

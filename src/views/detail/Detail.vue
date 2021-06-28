@@ -16,6 +16,9 @@
     <!-- 返回顶部按钮组件 -->
     <!-- 给组件添加原生的点击事件 监听组件根元素的原生事件-->
     <back-top @click.native="backTop" v-show="isShow" />
+
+    <!-- 加入购物车提示 -->
+    <!-- <toast :message="message" :show="show" /> -->
   </div>
 </template>
 
@@ -31,11 +34,14 @@
 
   import Scroll from 'components/common/scroll/Scroll.vue'
   import GoodsList from 'components/content/goods/GoodsList.vue'
+  // import Toast from 'components/common/toast/Toast.vue'
 
   import { debounce } from 'common/utils'
   import { getDetail, getRecommend, Goods, Shop, GoodsParam } from 'network/detail'
   import { itemImgListenerMixin, backTopMixin } from 'common/mixin'
 
+  //映射actions的属性
+  import { mapActions } from 'vuex'
   export default {
     name: 'Detail',
     data() {
@@ -51,6 +57,8 @@
         themeTopYs: [], //详情页顶部tab栏
         getThemeTopY: null, //加入防抖后获取的y值
         currentIndex: 0
+        // message: '',
+        // show: false
       }
     },
     components: {
@@ -64,8 +72,12 @@
       DetailBottomBar,
       Scroll,
       GoodsList
+      // Toast
     },
     methods: {
+      //映射指定函数
+      ...mapActions(['addCart']),
+
       //商品详情图片加载完成
       imageLoad() {
         //方法一：不使用防抖
@@ -145,7 +157,24 @@
         //2.将商品添加到购物车
         // this.$store.state.cartList.push(product)//这样不推荐，要经过vuex的mutations
         // this.$store.commit('addCart', product)//这是传递数据到mutations
-        this.$store.dispatch('addCart', product) //传递数据到actions
+        //传递数据到actions
+        // this.$store.dispatch('addCart', product).then(res => {
+        //   console.log(res)
+        // })
+
+        //使用了vuex里的actions的Promise和mapActions
+        this.addCart(product).then(res => {
+          // console.log(res)
+          // this.show = true
+          // this.message = res
+          // setTimeout(() => {
+          //   this.show = false
+          //   this.message = ''
+          // }, 1500)
+
+          // this.$toast.show(res, 2000)
+          this.$toast.show(res)
+        })
       }
     },
     mixins: [itemImgListenerMixin, backTopMixin],
